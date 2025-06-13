@@ -1,10 +1,18 @@
 package com.portal.exam;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users")
@@ -19,11 +27,49 @@ public class User {
 	private String lastName;
 	private String email;
 	private String phone;
+	private String profile;
 	
+	//User many roles
+	
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
+	@JsonIgnore
+	private Set<UserRole> userRoles = new HashSet<>();
+	
+	
+	public Set<UserRole> getUserRoles() {
+		return userRoles;
+	}
+
+	public void setUserRoles(Set<UserRole> userRoles) {
+		this.userRoles = userRoles;
+	}
+
+	public User(Long id, String username, String password, String firstName, String lastName, String email,
+			String phone, String profile, boolean enabled) {
+		super();
+		this.id = id;
+		this.username = username;
+		this.password = password;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+		this.phone = phone;
+		this.profile = profile;
+		this.enabled = enabled;
+	}
+
+	public String getProfile() {
+		return profile;
+	}
+
+	public void setProfile(String profile) {
+		this.profile = profile;
+	}
+
 	private boolean enabled = true;
 
 	public User(Long id, String username, String password, String firstName, String lastName, String email,
-			String phone, boolean enabled) {
+			String phone, boolean enabled, String profile) {
 		super();
 		this.id = id;
 		this.username = username;
@@ -33,6 +79,7 @@ public class User {
 		this.email = email;
 		this.phone = phone;
 		this.enabled = enabled;
+		this.profile = profile;
 	}
 
 	public Long getId() {
