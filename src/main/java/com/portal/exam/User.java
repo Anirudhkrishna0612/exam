@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column; // Added import for @Column
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -17,134 +18,142 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 @Entity
 @Table(name = "users")
 public class User {
-	
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private Long id;
-	private String username;
-	private String password;
-	private String firstName;
-	private String lastName;
-	private String email;
-	private String phone;
-	private String profile;
-	
-	//User many roles
-	
-	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
-	@JsonIgnore
-	private Set<UserRole> userRoles = new HashSet<>();
-	
-	
-	public Set<UserRole> getUserRoles() {
-		return userRoles;
-	}
 
-	public void setUserRoles(Set<UserRole> userRoles) {
-		this.userRoles = userRoles;
-	}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // CHANGED: For MySQL AUTO_INCREMENT
+    private Long id;
 
-	public User(Long id, String username, String password, String firstName, String lastName, String email,
-			String phone, String profile, boolean enabled) {
-		super();
-		this.id = id;
-		this.username = username;
-		this.password = password;
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.email = email;
-		this.phone = phone;
-		this.profile = profile;
-		this.enabled = enabled;
-	}
+    @Column // Added @Column for explicit mapping, though not strictly required for defaults
+    private String username;
 
-	public String getProfile() {
-		return profile;
-	}
+    @Column
+    private String password;
 
-	public void setProfile(String profile) {
-		this.profile = profile;
-	}
+    @Column
+    private String firstName;
 
-	private boolean enabled = true;
+    @Column
+    private String lastName;
 
-	public User(Long id, String username, String password, String firstName, String lastName, String email,
-			String phone, boolean enabled, String profile) {
-		super();
-		this.id = id;
-		this.username = username;
-		this.password = password;
-		this.firstName = firstName;
-		this.lastName = lastName;
-		this.email = email;
-		this.phone = phone;
-		this.enabled = enabled;
-		this.profile = profile;
-	}
+    @Column
+    private String email;
 
-	public Long getId() {
-		return id;
-	}
+    @Column
+    private String phone;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    @Column
+    private String profile;
 
-	public String getUsername() {
-		return username;
-	}
+    @Column
+    private boolean enabled = true;
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    // User many roles
+    // FetchType.EAGER is kept as per your original code
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
+    @JsonIgnore
+    private Set<UserRole> userRoles = new HashSet<>();
 
-	public String getPassword() {
-		return password;
-	}
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    // --- Constructors ---
 
-	public String getFirstName() {
-		return firstName;
-	}
+    // JPA requires a public or protected no-argument constructor
+    public User() {
+    }
 
-	public void setFirstName(String firstName) {
-		this.firstName = firstName;
-	}
+    // Consolidated all-argument constructor (removed redundancy)
+    public User(Long id, String username, String password, String firstName, String lastName, String email,
+                String phone, String profile, boolean enabled) {
+        super();
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phone = phone;
+        this.profile = profile;
+        this.enabled = enabled;
+    }
 
-	public String getLastName() {
-		return lastName;
-	}
+    // --- Getters and Setters (kept as is) ---
 
-	public void setLastName(String lastName) {
-		this.lastName = lastName;
-	}
+    public Set<UserRole> getUserRoles() {
+        return userRoles;
+    }
 
-	public String getEmail() {
-		return email;
-	}
+    public void setUserRoles(Set<UserRole> userRoles) {
+        this.userRoles = userRoles;
+    }
 
-	public void setEmail(String email) {
-		this.email = email;
-	}
+    public String getProfile() {
+        return profile;
+    }
 
-	public String getPhone() {
-		return phone;
-	}
+    public void setProfile(String profile) {
+        this.profile = profile;
+    }
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public boolean isEnabled() {
-		return enabled;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-	
+    public String getUsername() {
+        return username;
+    }
 
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 }
