@@ -1,33 +1,63 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Maven build output
+/target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildnumber.properties
 
-### STS ###
-.apt_generated
+# Gradle (if you ever switch)
+.gradle/
+/build/
+
+# Eclipse / STS IDE files
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
+.sts4-cache/
+/bin/  # <--- IMPORTANT: Explicitly ignore the entire bin folder
+.metadata/ # Common Eclipse workspace metadata
 
-### IntelliJ IDEA ###
-.idea
-*.iws
+# IntelliJ IDEA IDE files
+.idea/
 *.iml
 *.ipr
+*.iws
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
+# VS Code IDE files
 .vscode/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Compiled class files
+*.class  # <--- IMPORTANT: Explicitly ignore all .class files
+
+# Generated binary products
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Log files
+*.log
+logs/
+
+# Specific Spring Boot files
+# Spring Boot auto-generated files (e.g. for `spring-boot:run`)
+*.jar.original
+
+# Database files (if using embedded H2, for example)
+*.mv.db
+*.trace.db
+
+# Project-specific temp files (adjust as needed)
+/src/main/resources/static/assets/uploads/
+/src/main/resources/static/files/

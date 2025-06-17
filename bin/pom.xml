@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.18</version> <!-- Your Spring Boot Parent Version -->
+		<version>2.7.18</version> <!-- This version is set to 2.7.18 -->
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.portal</groupId>
@@ -28,15 +28,14 @@
 		<url />
 	</scm>
 	<properties>
-		<java.version>11</java.version> <!-- Your Java Version -->
+		<java.version>11</java.version> <!-- Java version is set to 11 -->
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		<!-- Uncomment if you need Spring Security
-		<dependency>
+		<!--<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>-->
@@ -52,41 +51,23 @@
 			<optional>true</optional>
 		</dependency>
 
-        <!--
-            MYSQL CONNECTOR/J DEPENDENCY:
-            We are explicitly setting the version here. Although Spring Boot manages many versions,
-            sometimes for specific drivers, it's safer to be explicit, especially if you're
-            getting "version cannot be empty" errors.
-            Using com.mysql:mysql-connector-j as per relocation warning.
-        -->
 		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<version>8.0.33</version> <!-- EXPLICITLY SET VERSION HERE -->
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
 			<scope>runtime</scope>
 		</dependency>
 
-        <!--
-            LOMBOK DEPENDENCY:
-            The 'lombok:null:jar' error is tricky. It means the annotation processor
-            path is looking for a version that's not being resolved.
-            The solution is to explicitly define the version here in the main dependency
-            block AND in the maven-compiler-plugin's annotationProcessorPaths.
-        -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.28</version> <!-- EXPLICITLY SET VERSION HERE -->
 			<optional>true</optional>
 		</dependency>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	<!-- Uncomment if you need Spring Security Test
-		<dependency>
+	<!--	<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
@@ -98,17 +79,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<!--
-                    Explicitly set compiler plugin version for stability.
-                    This version (3.10.1) is generally compatible with JDK 11 and Spring Boot 2.7.x
-                -->
-                <version>3.10.1</version>
 				<configuration>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-                            <version>1.18.28</version> <!-- AND HERE FOR ANNOTATION PROCESSING -->
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
