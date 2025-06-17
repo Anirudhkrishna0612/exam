@@ -47,10 +47,19 @@ public class ExamApplication implements CommandLineRunner{
 		
 		userRoleSet.add(userRole);
 		
-		User user1 = this.userService.createUser(user, userRoleSet);
-		System.out.println(user1.getUsername());
-		
-		
+		try {
+		    User user1 = this.userService.createUser(user, userRoleSet);
+		    System.out.println("User created successfully: " + user1.getUsername());
+		} catch (Exception e) {
+		    // This block will catch the "User already present !!" exception
+		    System.err.println("User setup failed or user already exists: " + e.getMessage());
+            // Optionally, you can print the full stack trace for debugging purposes
+            // e.printStackTrace();
+		}
+		// The application will now continue to start even if the user already exists.
+		// If you intend for this CommandLineRunner to ONLY create a user once,
+		// you might want to remove or comment out the user creation code after the first successful run,
+		// or enhance the logic to check for the user's existence more explicitly here.
 	}
 
 }
