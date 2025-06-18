@@ -32,9 +32,9 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationEntryPoint unauthorizedHandler; // Ensure this class is created and @Component
 
-    // You will autowire your custom JWT Authentication Filter here once it's created.
-    // @Autowired
-    // private JwtAuthenticationFilter jwtAuthenticationFilter; // Keep this commented for now
+    
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter; 
 
     /**
      * Configures and exposes the AuthenticationManager bean.
