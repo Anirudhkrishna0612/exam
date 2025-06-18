@@ -1,5 +1,6 @@
 package com.portal.exam;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,17 +14,20 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "users")
-public class User {
+public class User implements UserDetails{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // CHANGED: For MySQL AUTO_INCREMENT
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column // Added @Column for explicit mapping, though not strictly required for defaults
+    @Column 
     private String username;
 
     @Column
@@ -48,7 +52,7 @@ public class User {
     private boolean enabled = true;
 
     // User many roles
-    // FetchType.EAGER is kept as per your original code
+    
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "user")
     @JsonIgnore
     private Set<UserRole> userRoles = new HashSet<>();
@@ -56,7 +60,7 @@ public class User {
 
     // --- Constructors ---
 
-    // JPA requires a public or protected no-argument constructor
+    
     public User() {
     }
 
@@ -156,4 +160,35 @@ public class User {
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
+
+	@Override
+	public Collection<? extends GrantedAuthority> getAuthorities() {
+		
+		Set<Authority> set = new HashSet<>();
+		
+		this.userRoles.forEach(userRole ->{
+			set.add(new Authority(userRole.getRole().getRoleName()));
+		});
+
+		
+		return null;
+	}
+
+	@Override
+	public boolean isAccountNonExpired() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public boolean isAccountNonLocked() {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public boolean isCredentialsNonExpired() {
+		// TODO Auto-generated method stub
+		return true;
+	}
 }

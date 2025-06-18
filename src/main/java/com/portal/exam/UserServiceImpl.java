@@ -1,18 +1,27 @@
 package com.portal.exam;
 
+import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder; // Keep this import
+
+import java.util.ArrayList;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder; 
 
-    @Autowired
-    private RoleRepository roleRepository;
+    
+    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     // Creating user
     @Override
@@ -23,23 +32,25 @@ public class UserServiceImpl implements UserService {
             System.out.println("User is already there !!");
             throw new Exception("User already present !!");
         } else {
-            // Create user
+            // Encodes the password before saving
+            user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+
             for (UserRole ur : userRoles) {
-                // Check if the role already exists by name
                 Role existingRole = roleRepository.findByRoleName(ur.getRole().getRoleName());
                 if (existingRole == null) {
-                    // If role doesn't exist, save the new role
                     roleRepository.save(ur.getRole());
                 } else {
-                    // If role exists, use the existing role (important for foreign key)
                     ur.setRole(existingRole);
                 }
             }
 
-            // Ensure the user's userRoles collection is populated with managed entities
-            user.getUserRoles().addAll(userRoles);
-            local = this.userRepository.save(user);
+            if (user.getUserRoles() == null) {
+                user.setUserRoles(userRoles);
+            } else {
+                user.getUserRoles().addAll(userRoles);
+            }
 
+            local = this.userRepository.save(user);
         }
 
         return local;
@@ -54,7 +65,22 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long userId) {
         this.userRepository.deleteById(userId);
-
     }
 
+    // Implementation of loadUserByUsername method from UserDetailsService
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = this.userRepository.findByUsername(username);
+
+        if (user == null) {
+            System.out.println("User not found: " + username);
+            throw new UsernameNotFoundException("No user found with username: " + username);
+        }
+
+        return new org.springframework.security.core.userdetails.User(
+            user.getUsername(),
+            user.getPassword(),
+            new ArrayList<>() 
+        );
+    }
 }
