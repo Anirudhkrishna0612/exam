@@ -1,86 +1,86 @@
+
 package com.portal.exam;
 
-import org.springframework.stereotype.Service;
+import com.portal.exam.User; // Your custom User entity
+import com.portal.exam.Role; // Assuming you have a Role model
+import com.portal.exam.UserRole; // Assuming you have a UserRole entity
+import com.portal.exam.RoleRepository;
+import com.portal.exam.UserRepository;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder; // Keep this import
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Collection;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
 
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder; 
+    @Autowired
+    private UserRepository userRepository;
 
-    
-    public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    @Autowired
+    private RoleRepository roleRepository;
 
-    // Creating user
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     public User createUser(User user, Set<UserRole> userRoles) throws Exception {
-
-        User local = this.userRepository.findByUsername(user.getUsername());
-        if (local != null) {
+        User localUser = this.userRepository.findByUsername(user.getUsername());
+        if (localUser != null) {
             System.out.println("User is already there !!");
             throw new Exception("User already present !!");
         } else {
-            // Encodes the password before saving
             user.setPassword(this.passwordEncoder.encode(user.getPassword()));
-
             for (UserRole ur : userRoles) {
-                Role existingRole = roleRepository.findByRoleName(ur.getRole().getRoleName());
-                if (existingRole == null) {
-                    roleRepository.save(ur.getRole());
-                } else {
-                    ur.setRole(existingRole);
-                }
+                roleRepository.save(ur.getRole());
             }
-
-            if (user.getUserRoles() == null) {
-                user.setUserRoles(userRoles);
-            } else {
-                user.getUserRoles().addAll(userRoles);
-            }
-
-            local = this.userRepository.save(user);
+            user.getUserRoles().addAll(userRoles);
+            localUser = this.userRepository.save(user);
         }
-
-        return local;
+        return localUser;
     }
 
-    // getting user by username
+    // **CRITICAL FIX: ADD THE IMPLEMENTATION FOR getUserByUsername**
     @Override
-    public User getUser(String username) {
-        return this.userRepository.findByUsername(username);
+    public User getUserByUsername(String username) {
+        return this.userRepository.findByUsername(username); // This calls the method from your UserRepository
     }
 
-    @Override
-    public void deleteUser(Long userId) {
-        this.userRepository.deleteById(userId);
-    }
-
-    // Implementation of loadUserByUsername method from UserDetailsService
+    // --- Implementation of Spring Security's UserDetailsService method ---
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = this.userRepository.findByUsername(username);
 
         if (user == null) {
-            System.out.println("User not found: " + username);
-            throw new UsernameNotFoundException("No user found with username: " + username);
+            throw new UsernameNotFoundException("User not found!");
         }
 
+        Collection<SimpleGrantedAuthority> authorities = new HashSet<>();
+        if (user.getUserRoles() != null) {
+            for (com.portal.exam.UserRole userRole : user.getUserRoles()) {
+                authorities.add(new SimpleGrantedAuthority(userRole.getRole().getRoleName()));
+            }
+        }
+        
         return new org.springframework.security.core.userdetails.User(
-            user.getUsername(),
-            user.getPassword(),
-            new ArrayList<>() 
+                user.getUsername(),
+                user.getPassword(),
+                authorities
         );
+    }
+
+    // **CRITICAL: Add the deleteUser method from your UserService interface**
+    @Override
+    public void deleteUser(Long userId) {
+        this.userRepository.deleteById(userId);
     }
 }

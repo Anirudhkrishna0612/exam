@@ -1,6 +1,11 @@
+
 package com.portal.exam;
 
 import java.security.Principal;
+
+import com.portal.exam.User; 
+import com.portal.exam.UserService; 
+import com.portal.exam.UserServiceImpl; 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,33 +15,39 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.bind.annotation.CrossOrigin;
+// import org.springframework.web.bind.annotation.CrossOrigin; // REMOVE THIS IMPORT if it was present
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.portal.exam.UserNotFoundException; 
 
 @RestController
-@CrossOrigin("*")
-public class AuthenticateController { // Start of AuthenticateController class
+// REMOVE THIS ANNOTATION: @CrossOrigin("*") - Let WebConfig handle CORS globally
+public class AuthenticateController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    // **CRITICAL FIX: Inject your UserDetailsService implementation directly by its class name**
+    // Based on your file structure, this is likely UserServiceImpl
     @Autowired
     private UserServiceImpl userDetailsService;
 
     @Autowired
     private JwtUtil jwtUtil;
 
-    // This is the static inner class for JwtResponse. It must be inside AuthenticateController.
+    @Autowired
+    private UserService userService;
+
+    
     public static class JwtResponse {
         private String jwtToken;
+        private User user; 
 
-        public JwtResponse(String jwtToken) {
+        public JwtResponse(String jwtToken, User user) {
             this.jwtToken = jwtToken;
+            this.user = user;
         }
 
         public String getJwtToken() {
@@ -45,6 +56,14 @@ public class AuthenticateController { // Start of AuthenticateController class
 
         public void setJwtToken(String jwtToken) {
             this.jwtToken = jwtToken;
+        }
+
+        public User getUser() { // Getter for the User object
+            return user;
+        }
+
+        public void setUser(User user) { // Setter for the User object
+            this.user = user;
         }
     }
 
@@ -65,22 +84,35 @@ public class AuthenticateController { // Start of AuthenticateController class
             throw new Exception("INVALID CREDENTIALS: " + e.getMessage());
         }
 
+        // Use the injected userDetailsService
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(jwtRequest.getUsername());
         String token = this.jwtUtil.generateToken(userDetails);
+        
+        // Fetch your actual domain User object
+        User currentUser = this.userService.getUserByUsername(jwtRequest.getUsername());
 
-        return ResponseEntity.ok(new JwtResponse(token));
+        // Return the token AND your custom User object in the response
+        return ResponseEntity.ok(new JwtResponse(token, currentUser));
     }
-    
     
     //Returns the detail of current user
-    @GetMapping("/current-user") 
-    public User getCurrentUser(Principal principal) {
-    	return ((User)this.userDetailsService.loadUserByUsername(principal.getName()));
+    @GetMapping("/current-user")    
+    public ResponseEntity<?> getCurrentUser(Principal principal) {
+        String username = principal.getName();
+        
+        // Fetch your actual custom User from the database using the domain UserService
+        User user = this.userService.getUserByUsername(username);
+        
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        return ResponseEntity.ok(user);
     }
 
-    // This is the private authenticate method. It must be inside AuthenticateController.
+    // This is the private authenticate method. 
     private void authenticate(String username, String password) throws Exception {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
 
-} // End of AuthenticateController class
+}
