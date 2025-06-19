@@ -3,18 +3,18 @@ package com.portal.exam; // Ensure this package matches your file location
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod; // NEW IMPORT: Required for HttpMethod.OPTIONS
+import org.springframework.http.HttpMethod; // Required for HttpMethod.OPTIONS
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy; // NEW IMPORT: Required for SessionCreationPolicy
+import org.springframework.security.config.http.SessionCreationPolicy; // Required for SessionCreationPolicy
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Needed for addFilterBefore (future)
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Needed for addFilterBefore
 
 /**
  * Main Spring Security configuration for the application.
@@ -30,11 +30,12 @@ public class SecurityConfig {
     // Autowire your custom JWT Authentication Entry Point.
     // This will be invoked when an unauthenticated user tries to access a protected resource.
     @Autowired
-    private JwtAuthenticationEntryPoint unauthorizedHandler; // Ensure this class is created and @Component
+    private JwtAuthenticationEntryPoint unauthorizedHandler;
 
-    
+    // Autowire your custom JWT Authentication Filter.
+    // This filter will be responsible for validating JWT tokens.
     @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter; 
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Configures and exposes the AuthenticationManager bean.
@@ -80,15 +81,15 @@ public class SecurityConfig {
             // Disable Spring Security's default CORS handling.
             // You should have a separate CORS configuration (e.g., a @Bean CorsConfigurationSource,
             // or @CrossOrigin on controllers) if your frontend is on a different origin.
-            .cors(cors -> cors.disable()) // ADDED: Disables Spring Security's CORS config
+            .cors(cors -> cors.disable())
 
             // Configure authorization rules for HTTP requests.
             .authorizeHttpRequests(authorize -> authorize
                 // Allow unauthenticated access to the user signup and token generation (login) endpoints.
-                .antMatchers("/user/", "/generate-token").permitAll() // ADDED: /generate-token for login endpoint
+                .antMatchers("/user/", "/generate-token").permitAll()
                 // Allow OPTIONS requests (preflight requests from browsers) for all paths.
                 // This is crucial for CORS to work correctly.
-                .antMatchers(HttpMethod.OPTIONS).permitAll() // ADDED: Permitting OPTIONS method
+                .antMatchers(HttpMethod.OPTIONS).permitAll()
                 // All other requests require authentication.
                 .anyRequest().authenticated()
             )
@@ -96,21 +97,21 @@ public class SecurityConfig {
             // When an unauthenticated user tries to access a protected resource,
             // the JwtAuthenticationEntryPoint will be invoked.
             .exceptionHandling(exceptionHandling -> exceptionHandling
-                .authenticationEntryPoint(unauthorizedHandler) // ADDED: Custom entry point
+                .authenticationEntryPoint(unauthorizedHandler)
             )
             // Configure session management to be stateless.
             // This is vital for JWT-based authentication as the server does not maintain sessions.
             .sessionManagement(sessionManagement -> sessionManagement
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // ADDED: Stateless session policy
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             // Disable default form login and HTTP Basic authentication as we are using JWT.
             .formLogin(form -> form.disable())
             .httpBasic(httpBasic -> httpBasic.disable());
 
-        // You will add your custom JWT Authentication Filter here later.
+        // **IMPORTANT: ADD YOUR CUSTOM JWT AUTHENTICATION FILTER TO THE SPRING SECURITY FILTER CHAIN**
         // It should run before Spring Security's default UsernamePasswordAuthenticationFilter
         // to process the JWT from the request header.
-        // http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Keep commented for now
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
