@@ -1,17 +1,20 @@
+// com.portal.exam.controller.UserController.java
+
 package com.portal.exam;
+
+import com.portal.exam.Role; // Use the Role model
+import com.portal.exam.User; // Use the User model
+import com.portal.exam.UserRole; // Use the UserRole model
+import com.portal.exam.RoleRepository; // Import RoleRepository
+import com.portal.exam.UserService;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/user")
@@ -21,35 +24,51 @@ public class UserController {
 	@Autowired
 	private UserService userService;
 	
-	//Creating User
+	@Autowired
+	private RoleRepository roleRepository; // Inject RoleRepository to fetch roles
+	
+	// Creating User for signup (defaulting to NORMAL role)
 	@PostMapping("/")
-	public User createUser(@RequestBody User user) throws Exception {
-		
-		user.setProfile("default.png");
-		Set<UserRole> roles = new HashSet<>();
-		Role role = new Role();
-		role.setRoleId(45L);
-		role.setRoleName("NORMAL");
-		
-		UserRole userRole = new UserRole();
-		userRole.setUser(user);
-		userRole.setRole(role);
-		
-		roles.add(userRole);
-		
-		return this.userService.createUser(user, roles);
+	public ResponseEntity<User> createUser(@RequestBody User user) {
+		try {
+			user.setProfile("default.png"); // Set default profile picture
+
+			Set<UserRole> roles = new HashSet<>();
+			
+			// **CRITICAL FIX: Fetch the 'NORMAL' role from the database.**
+			// Do NOT hardcode roleId or create new Role() objects for existing roles.
+			Role normalRole = roleRepository.findByRoleName("NORMAL"); 
+			
+			if (normalRole == null) {
+				System.err.println("Error: 'NORMAL' role not found in database. Please ensure it's initialized.");
+				// Return an appropriate error response if the role isn't found
+				return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); 
+			}
+			
+			UserRole userRole = new UserRole();
+			userRole.setUser(user);        // Set the user (will be saved with user)
+			userRole.setRole(normalRole);  // **Set the fetched, managed 'NORMAL' role**
+			
+			roles.add(userRole);
+			
+			User createdUser = this.userService.createUser(user, roles); // Pass user and its roles to service
+			return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+
+		} catch (Exception e) {
+			System.err.println("Error during user signup: " + e.getMessage());
+			e.printStackTrace(); // Log full stack trace for detailed debugging
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR); // Generic error response
+		}
 	}
 	
 	@GetMapping("/{username}")
 	public User getUser(@PathVariable("username")String username) {
-		
 		return this.userService.getUserByUsername(username);
 	}
 	
-	//Delete the user by id
+	// Delete the user by id
 	@DeleteMapping("/{userId}")
 	public void deleteUser(@PathVariable("userId") Long userId ) {
 		this.userService.deleteUser(userId);
 	}
-	
 }

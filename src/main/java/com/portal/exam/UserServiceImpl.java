@@ -1,24 +1,24 @@
+// com.portal.exam.service.impl.UserServiceImpl.java
 
 package com.portal.exam;
 
-import com.portal.exam.User; // Your custom User entity
-import com.portal.exam.Role; // Assuming you have a Role model
-import com.portal.exam.UserRole; // Assuming you have a UserRole entity
+import com.portal.exam.User;
+import com.portal.exam.UserRole;
+import com.portal.exam.Role;
 import com.portal.exam.RoleRepository;
 import com.portal.exam.UserRepository;
-
+import com.portal.exam.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Keep this import
+import org.springframework.stereotype.Service;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService, UserDetailsService {
@@ -29,8 +29,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Autowired
     private RoleRepository roleRepository;
 
+    // **CRITICAL (Minor change): Autowire directly as BCryptPasswordEncoder**
+    // This is less flexible for swapping encoders, but eliminates any doubt about matching types.
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder; 
 
     @Override
     public User createUser(User user, Set<UserRole> userRoles) throws Exception {
@@ -40,22 +42,22 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             throw new Exception("User already present !!");
         } else {
             user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+
             for (UserRole ur : userRoles) {
-                roleRepository.save(ur.getRole());
+                ur.setUser(user);
             }
-            user.getUserRoles().addAll(userRoles);
+            
+            user.getUserRoles().addAll(userRoles); 
             localUser = this.userRepository.save(user);
         }
         return localUser;
     }
 
-    // **CRITICAL FIX: ADD THE IMPLEMENTATION FOR getUserByUsername**
     @Override
     public User getUserByUsername(String username) {
-        return this.userRepository.findByUsername(username); // This calls the method from your UserRepository
+        return this.userRepository.findByUsername(username);
     }
 
-    // --- Implementation of Spring Security's UserDetailsService method ---
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = this.userRepository.findByUsername(username);
@@ -64,10 +66,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
             throw new UsernameNotFoundException("User not found!");
         }
 
-        Collection<SimpleGrantedAuthority> authorities = new HashSet<>();
+        Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         if (user.getUserRoles() != null) {
             for (com.portal.exam.UserRole userRole : user.getUserRoles()) {
-                authorities.add(new SimpleGrantedAuthority(userRole.getRole().getRoleName()));
+                if (userRole.getRole() != null && userRole.getRole().getRoleName() != null) {
+                    authorities.add(new SimpleGrantedAuthority(userRole.getRole().getRoleName()));
+                }
             }
         }
         
@@ -78,7 +82,6 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         );
     }
 
-    // **CRITICAL: Add the deleteUser method from your UserService interface**
     @Override
     public void deleteUser(Long userId) {
         this.userRepository.deleteById(userId);
