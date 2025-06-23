@@ -1,11 +1,14 @@
-
-package com.portal.exam;
+package com.portal.exam; // Make sure this package name is correct
 
 import java.security.Principal;
 
-import com.portal.exam.User; 
-import com.portal.exam.UserService; 
-import com.portal.exam.UserServiceImpl; 
+import com.portal.exam.User;
+import com.portal.exam.UserService;
+import com.portal.exam.UserServiceImpl;
+import com.portal.exam.UserNotFoundException; // Assuming this is where UserNotFoundException is located
+import com.portal.exam.JwtRequest; // Assuming this path for JwtRequest
+import com.portal.exam.JwtResponse; // Assuming this path for JwtResponse
+import com.portal.exam.JwtUtil; // Assuming this path for JwtUtil
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,23 +17,22 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-// import org.springframework.web.bind.annotation.CrossOrigin; // REMOVE THIS IMPORT if it was present
+import org.springframework.security.core.userdetails.UserDetailsService; // Or your specific UserDetailsService
+import org.springframework.security.core.userdetails.UsernameNotFoundException; // Explicitly import if needed
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-// REMOVE THIS ANNOTATION: @CrossOrigin("*") - Let WebConfig handle CORS globally
+@RequestMapping("/auth")
 public class AuthenticateController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    // **CRITICAL FIX: Inject your UserDetailsService implementation directly by its class name**
-    // Based on your file structure, this is likely UserServiceImpl
     @Autowired
     private UserServiceImpl userDetailsService;
 
@@ -39,33 +41,6 @@ public class AuthenticateController {
 
     @Autowired
     private UserService userService;
-
-    
-    public static class JwtResponse {
-        private String jwtToken;
-        private User user; 
-
-        public JwtResponse(String jwtToken, User user) {
-            this.jwtToken = jwtToken;
-            this.user = user;
-        }
-
-        public String getJwtToken() {
-            return jwtToken;
-        }
-
-        public void setJwtToken(String jwtToken) {
-            this.jwtToken = jwtToken;
-        }
-
-        public User getUser() { // Getter for the User object
-            return user;
-        }
-
-        public void setUser(User user) { // Setter for the User object
-            this.user = user;
-        }
-    }
 
     // generate token endpoint
     @PostMapping("/generate-token")
@@ -84,7 +59,6 @@ public class AuthenticateController {
             throw new Exception("INVALID CREDENTIALS: " + e.getMessage());
         }
 
-        // Use the injected userDetailsService
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(jwtRequest.getUsername());
         String token = this.jwtUtil.generateToken(userDetails);
         
@@ -96,23 +70,29 @@ public class AuthenticateController {
     }
     
     //Returns the detail of current user
-    @GetMapping("/current-user")    
+    @GetMapping("/current-user")
     public ResponseEntity<?> getCurrentUser(Principal principal) {
         String username = principal.getName();
         
         // Fetch your actual custom User from the database using the domain UserService
         User user = this.userService.getUserByUsername(username);
         
+        // --- DEBUG STATEMENTS ADDED ---
+        System.out.println("DEBUG: In /current-user for username: " + username);
+        System.out.println("DEBUG: User object fetched: " + user); // This will show if user is null or a User object
+        // --- END DEBUG STATEMENTS ---
+
         if (user == null) {
+            System.out.println("DEBUG: User not found in DB for /current-user, returning 404.");
             return ResponseEntity.notFound().build();
         }
         
+        System.out.println("DEBUG: User found for /current-user, returning OK.");
         return ResponseEntity.ok(user);
     }
 
-    // This is the private authenticate method. 
+    // This is the private authenticate method.
     private void authenticate(String username, String password) throws Exception {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
     }
-
 }
