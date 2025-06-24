@@ -1,21 +1,10 @@
 // src/main/java/com/portal/exam/Quiz.java
-package com.portal.exam; // Confirmed: This is your single package
+package com.portal.exam;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
 
 @Entity
 @Table(name = "quiz")
@@ -23,27 +12,25 @@ public class Quiz {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long qid; // Use qid as confirmed consistently
+    private Long qid;
 
     private String title;
 
-    @Column(length = 5000) // Description can be long
+    @Column(length = 5000)
     private String description;
 
-    // CRITICAL FIX: Changed type from String to Integer
     private Integer maxMarks;
     private Integer numberOfQuestions;
 
-    private boolean active = false; // Default to false
+    private boolean active = false;
 
-    @ManyToOne(fetch = FetchType.EAGER) // EAGERly fetch category with quiz
-    private Category category; // Category also needs to be in com.portal.exam
+    @ManyToOne(fetch = FetchType.EAGER)
+    private Category category;
 
     @OneToMany(mappedBy = "quiz", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore // To prevent infinite recursion when serializing Quiz
-    private Set<Question> questions = new HashSet<>(); // Questions also need to be in com.portal.exam
+    @JsonIgnore // KEEP THIS: To prevent infinite recursion when serializing Quiz
+    private Set<Question> questions = new HashSet<>();
 
-    // Constructors
     public Quiz() {
     }
 
@@ -57,7 +44,6 @@ public class Quiz {
         this.category = category;
     }
 
-    // Getters and Setters
     public Long getQid() {
         return qid;
     }
@@ -82,19 +68,19 @@ public class Quiz {
         this.description = description;
     }
 
-    public Integer getMaxMarks() { // Now returns Integer
+    public Integer getMaxMarks() {
         return maxMarks;
     }
 
-    public void setMaxMarks(Integer maxMarks) { // Now accepts Integer
+    public void setMaxMarks(Integer maxMarks) {
         this.maxMarks = maxMarks;
     }
 
-    public Integer getNumberOfQuestions() { // Now returns Integer
+    public Integer getNumberOfQuestions() {
         return numberOfQuestions;
     }
 
-    public void setNumberOfQuestions(Integer numberOfQuestions) { // Now accepts Integer
+    public void setNumberOfQuestions(Integer numberOfQuestions) {
         this.numberOfQuestions = numberOfQuestions;
     }
 
@@ -125,13 +111,13 @@ public class Quiz {
     @Override
     public String toString() {
         return "Quiz{" +
-               "qid=" + qid +
-               ", title='" + title + '\'' +
-               ", description='" + description + '\'' +
-               ", maxMarks=" + maxMarks +
-               ", numberOfQuestions=" + numberOfQuestions +
-               ", active=" + active +
-               ", category=" + (category != null ? category.getCid() : "null") +
-               '}';
+                "qid=" + qid +
+                ", title='" + title + '\'' +
+                ", description='" + description + '\'' +
+                ", maxMarks=" + maxMarks +
+                ", numberOfQuestions=" + numberOfQuestions +
+                ", active=" + active +
+                ", category=" + (category != null ? category.getCid() : "null") +
+                '}';
     }
 }

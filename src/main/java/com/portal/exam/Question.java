@@ -1,17 +1,8 @@
 // src/main/java/com/portal/exam/Question.java
-package com.portal.exam; // Confirmed: This is your single package
+package com.portal.exam;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn; // Make sure this is imported
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+// import com.fasterxml.jackson.annotation.JsonIgnore; // NO LONGER NEEDED FOR THIS FILE
+import javax.persistence.*;
 
 @Entity
 @Table(name = "questions")
@@ -24,7 +15,7 @@ public class Question {
     @Column(length = 5000)
     private String content;
 
-    private String image;
+    // Removed: private String image;
 
     private String option1;
     private String option2;
@@ -33,24 +24,29 @@ public class Question {
 
     private String answer;
 
+    @Transient // This means this field will NOT be persisted in the database
+    private String givenAnswer;
+
     @ManyToOne(fetch = FetchType.EAGER)
-    // CRITICAL FIX: Explicitly specify referencedColumnName to match Quiz's primary key
-    @JoinColumn(name = "quiz_qid", referencedColumnName = "qid") // Ensure 'quiz_qid' is the column you want for the FK, 'qid' for the PK
-    @JsonIgnore
+    @JoinColumn(name = "quiz_qid", referencedColumnName = "qid") // Foreign key column name in questions table
+    // *** CRITICAL CHANGE: REMOVED @JsonIgnore from here ***
     private Quiz quiz;
 
     // Constructors
     public Question() {
+        // Initialize the quiz object to prevent NullPointerExceptions later if not set
+        this.quiz = new Quiz();
     }
 
-    public Question(String content, String image, String option1, String option2, String option3, String option4, String answer, Quiz quiz) {
+    // Constructor updated to reflect removal of 'image' and inclusion of 'givenAnswer'
+    public Question(String content, String option1, String option2, String option3, String option4, String answer, String givenAnswer, Quiz quiz) {
         this.content = content;
-        this.image = image;
         this.option1 = option1;
         this.option2 = option2;
         this.option3 = option3;
         this.option4 = option4;
         this.answer = answer;
+        this.givenAnswer = givenAnswer;
         this.quiz = quiz;
     }
 
@@ -69,14 +65,6 @@ public class Question {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    public String getImage() {
-        return image;
-    }
-
-    public void setImage(String image) {
-        this.image = image;
     }
 
     public String getOption1() {
@@ -119,6 +107,14 @@ public class Question {
         this.answer = answer;
     }
 
+    public String getGivenAnswer() {
+        return givenAnswer;
+    }
+
+    public void setGivenAnswer(String givenAnswer) {
+        this.givenAnswer = givenAnswer;
+    }
+
     public Quiz getQuiz() {
         return quiz;
     }
@@ -130,15 +126,16 @@ public class Question {
     @Override
     public String toString() {
         return "Question{" +
-               "quesId=" + quesId +
-               ", content='" + content + '\'' +
-               ", image='" + image + '\'' +
-               ", option1='" + option1 + '\'' +
-               ", option2='" + option2 + '\'' +
-               ", option3='" + option3 + '\'' +
-               ", option4='" + option4 + '\'' +
-               ", answer='" + answer + '\'' +
-               ", quiz=" + (quiz != null ? quiz.getQid() : "null") +
-               '}';
+                "quesId=" + quesId +
+                ", content='" + content + '\'' +
+                ", option1='" + option1 + '\'' +
+                ", option2='" + option2 + '\'' +
+                ", option3='" + option3 + '\'' +
+                ", option4='" + option4 + '\'' +
+                ", answer='" + answer + '\'' +
+                ", givenAnswer='" + givenAnswer + '\'' +
+                // Crucially, when printing, check if quiz is null to prevent NPE
+                ", quiz=" + (quiz != null && quiz.getQid() != null ? quiz.getQid() : "null") +
+                '}';
     }
 }

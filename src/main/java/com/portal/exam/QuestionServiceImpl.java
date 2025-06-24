@@ -6,10 +6,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional; // Changed to Optional for clarity with findById
-import java.util.stream.Collectors; // For stream operations
+import java.util.Optional;
+import java.util.stream.Collectors;
 
-@Service // Marks this as a Spring Service component
+@Service
 public class QuestionServiceImpl implements QuestionService {
 
     @Autowired
@@ -42,15 +42,13 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public List<Question> getQuestionsForQuiz(Quiz quiz, int numQuestions) {
-        List<Question> questions = this.questionRepository.findByQuizOrderByQuesIdAsc(quiz); // Get all for the quiz
+        List<Question> questions = this.questionRepository.findByQuizOrderByQuesIdAsc(quiz);
 
-        // Shuffle the questions to randomize order
         Collections.shuffle(questions);
 
-        // Return a sublist up to the requested number of questions
-        // Ensure not to exceed the available questions
+        // Ensure we don't try to get more questions than available
         return questions.stream()
-                .limit(numQuestions)
+                .limit(numQuestions > 0 ? numQuestions : questions.size())
                 .collect(Collectors.toList());
     }
 
@@ -61,8 +59,6 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Override
     public Question getQuestionWithAnswer(Long questionId) {
-        // This method is designed to fetch the full question including the answer
-        // It's primarily used for grading on the backend.
         return this.questionRepository.findById(questionId).orElse(null);
     }
 }
